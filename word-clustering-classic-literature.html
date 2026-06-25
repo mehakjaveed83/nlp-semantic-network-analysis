@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Clustering in Classic Literature</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,450;0,9..144,600;1,9..144,450&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+
+  /* ============ TOKENS ============ */
+  :root{
+    --parchment: #EDE6D6;
+    --parchment-dim: #E4DCC8;
+    --ink: #211F1A;
+    --ink-soft: #4A463D;
+    --rule: rgba(33,31,26,0.18);
+    --rule-strong: rgba(33,31,26,0.32);
+
+    --dracula: #8B3A3A;
+    --kafka: #5C5638;
+    --wonderland: #3D5A4C;
+
+    --paper-card: #F5F0E4;
+    --shadow-soft: rgba(33,31,26,0.10);
+
+    --serif: 'Fraunces', 'Source Serif 4', serif;
+    --serif-text: 'Source Serif 4', serif;
+    --mono: 'IBM Plex Mono', monospace;
+
+    --maxw: 920px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: var(--serif-text);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* subtle paper texture via layered gradients */
+  body::before{
+    content:"";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(33,31,26,0.025) 0, transparent 45%),
+      radial-gradient(circle at 80% 60%, rgba(33,31,26,0.02) 0, transparent 50%);
+    background-color: transparent;
+  }
+
+  .wrap{ position: relative; z-index: 1; }
+
+  a{ color: inherit; }
+
+  ::selection{ background: var(--ink); color: var(--parchment); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+
+  /* ============ LAYOUT PRIMITIVES ============ */
+  .container{
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+  section{ padding: 76px 0; }
+  .rule{
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 0;
+  }
+
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .eyebrow::before{
+    content:"";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.55;
+    flex-shrink: 0;
+  }
+
+  h1,h2,h3{
+    font-family: var(--serif);
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  /* ============ HEADER / MASTHEAD ============ */
+  header.masthead{
+    padding: 56px 0 0;
+  }
+  .masthead-top{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule);
+    text-transform: uppercase;
+  }
+
+  /* ============ HERO ============ */
+  .hero{
+    padding: 54px 0 36px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .hero h1{
+    font-size: clamp(40px, 5.4vw, 60px);
+    line-height: 1.04;
+    font-style: italic;
+    font-weight: 450;
+  }
+  .hero h1 em{
+    font-style: normal;
+    font-weight: 600;
+    display: block;
+  }
+  .hero-sub{
+    font-family: var(--serif-text);
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin-top: 22px;
+    max-width: 46ch;
+    font-style: italic;
+  }
+  .pill-row{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 26px;
+  }
+  .pill{
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.03em;
+    padding: 5px 11px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    color: var(--ink-soft);
+    background: var(--paper-card);
+  }
+
+  .hero-figure{
+    border: 1px solid var(--rule-strong);
+    background: var(--paper-card);
+    border-radius: 2px;
+    padding: 18px;
+  }
+  .hero-figure svg{ display:block; width: 100%; height: auto; }
+  .hero-figure-cap{
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    text-align: center;
+    margin-top: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ============ STAT STRIP ============ */
+  .stats{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .stat{
+    padding: 26px 20px;
+    border-right: 1px solid var(--rule);
+    text-align: center;
+  }
+  .stat:last-child{ border-right: none; }
+  .stat-num{
+    font-family: var(--serif);
+    font-size: 34px;
+    font-weight: 600;
+  }
+  .stat-label{
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  /* ============ SECTION HEADS ============ */
+  .section-head{
+    margin-bottom: 34px;
+  }
+  .section-head h2{
+    font-size: 30px;
+    font-style: italic;
+    font-weight: 450;
+  }
+  .section-head .num{
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  /* ============ PIPELINE (manuscript marginalia style) ============ */
+  .pipeline{
+    position: relative;
+    padding-left: 26px;
+    border-left: 1px solid var(--rule-strong);
+  }
+  .stage{
+    position: relative;
+    padding-bottom: 38px;
+  }
+  .stage:last-child{ padding-bottom: 0; }
+  .stage::before{
+    content:"";
+    position: absolute;
+    left: -31px;
+    top: 5px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--parchment);
+    border: 2px solid var(--ink);
+  }
+  .stage-label{
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .stage-title{
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .stage-detail{
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+    background: var(--paper-card);
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 3px;
+    border: 1px solid var(--rule);
+    margin-top: 4px;
+  }
+  .stage p{
+    margin: 10px 0 0;
+    max-width: 58ch;
+    color: var(--ink-soft);
+    font-size: 15.5px;
+  }
+  .stage-chain{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 12px;
+    line-height: 1.9;
+  }
+  .stage-chain .arrow{ opacity: 0.45; padding: 0 4px; }
+
+  /* ============ CORPUS — catalogue cards ============ */
+  .corpus-grid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--rule-strong);
+  }
+  .book-card{
+    padding: 26px 22px;
+    border-right: 1px solid var(--rule-strong);
+    position: relative;
+  }
+  .book-card:last-child{ border-right: none; }
+  .book-card .accent-bar{
+    position: absolute;
+    top:0; left:0; right:0;
+    height: 4px;
+  }
+  .book-card[data-book="dracula"] .accent-bar{ background: var(--dracula); }
+  .book-card[data-book="metamorphosis"] .accent-bar{ background: var(--kafka); }
+  .book-card[data-book="wonderland"] .accent-bar{ background: var(--wonderland); }
+
+  .book-glyph{ font-size: 26px; line-height: 1; margin-bottom: 14px; }
+  .book-card h3{
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .book-author{
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+  .book-card p{
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+  .book-tag{
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--rule-strong);
+  }
+  .book-card[data-book="dracula"] .book-tag{ color: var(--dracula); border-color: rgba(139,58,58,0.4); }
+  .book-card[data-book="metamorphosis"] .book-tag{ color: var(--kafka); border-color: rgba(92,86,56,0.4); }
+  .book-card[data-book="wonderland"] .book-tag{ color: var(--wonderland); border-color: rgba(61,90,76,0.4); }
+
+  /* ============ METRIC BLOCK ============ */
+  .metric-block{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  .metric-formula{
+    background: var(--ink);
+    color: var(--parchment);
+    padding: 28px 26px;
+    border-radius: 3px;
+    font-family: var(--mono);
+  }
+  .metric-formula .formula-label{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.55;
+    margin-bottom: 14px;
+  }
+  .metric-formula .formula-main{
+    font-size: 19px;
+    line-height: 1.7;
+  }
+  .metric-formula .formula-main sub{ font-size: 12px; }
+  .term-list{
+    margin-top: 18px;
+    font-size: 12.5px;
+    opacity: 0.75;
+    line-height: 1.8;
+  }
+  .term-list div{ display:flex; gap: 10px; }
+  .term-list .sym{ flex-shrink:0; width: 70px; opacity: 0.8; }
+
+  .metric-explain h3{
+    font-size: 19px;
+    margin-bottom: 12px;
+  }
+  .metric-explain p{
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin: 0 0 14px;
+  }
+  .metric-explain .callout{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    border-left: 2px solid var(--rule-strong);
+    padding-left: 14px;
+    color: var(--ink-soft);
+  }
+
+  /* ============ GRAPH / DIJKSTRA SECTION ============ */
+  .graph-section{
+    display: grid;
+    grid-template-columns: 0.95fr 1.05fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .graph-figure{
+    border: 1px solid var(--rule-strong);
+    background: var(--paper-card);
+    padding: 16px;
+    border-radius: 2px;
+  }
+  .graph-figure svg{ display:block; width:100%; height:auto; }
+  .graph-text h3{ font-size: 22px; margin-bottom: 14px; }
+  .graph-text p{ color: var(--ink-soft); font-size: 15.5px; margin: 0 0 14px; }
+
+  .path-trace{
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    color: var(--ink-soft);
+  }
+  .path-trace .path-row{ margin-bottom: 6px; }
+  .path-trace .path-row:last-child{ margin-bottom: 0; }
+  .path-trace strong{ color: var(--ink); }
+
+  /* ============ CLUSTERING METHODS ============ */
+  .methods-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--rule-strong);
+    border: 1px solid var(--rule-strong);
+  }
+  .method-card{
+    background: var(--parchment);
+    padding: 24px 24px 22px;
+  }
+  .method-head{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .method-head h3{ font-size: 18px; }
+  .method-head .method-icon{ width: 46px; height: 30px; flex-shrink:0; }
+  .method-card p{
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 8px 0 0;
+  }
+  .method-tag{
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+  }
+
+  /* ============ FINDINGS ============ */
+  .findings{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+  }
+  .finding-card{
+    border: 1px solid var(--rule-strong);
+    background: var(--paper-card);
+    padding: 22px 22px 20px;
+    border-radius: 2px;
+  }
+  .finding-mark{
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 30px;
+    color: var(--ink-soft);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .finding-card h3{
+    font-size: 16.5px;
+    margin-bottom: 8px;
+    line-height: 1.35;
+  }
+  .finding-card p{
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  .finding-card .sample-words{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink);
+    background: var(--parchment-dim);
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+
+  /* ============ CONCEPTS / TAXONOMY FOOTER ============ */
+  .concept-list{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .concept-pill{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    padding: 7px 13px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 20px;
+    color: var(--ink-soft);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .concept-pill:hover{
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  footer{
+    padding: 40px 0 60px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    display:flex;
+    justify-content: space-between;
+    border-top: 1px solid var(--rule);
+    margin-top: 20px;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 880px){
+    .hero{ grid-template-columns: 1fr; gap: 32px; }
+    .stats{ grid-template-columns: repeat(2,1fr); }
+    .stat{ border-bottom: 1px solid var(--rule); }
+    .stat:nth-child(2){ border-right:none; }
+    .stat:nth-child(4){ border-right:none; }
+    .corpus-grid{ grid-template-columns: 1fr; }
+    .book-card{ border-right:none; border-bottom: 1px solid var(--rule-strong); }
+    .book-card:last-child{ border-bottom:none; }
+    .metric-block{ grid-template-columns: 1fr; }
+    .graph-section{ grid-template-columns: 1fr; }
+    .methods-grid{ grid-template-columns: 1fr; }
+    .findings{ grid-template-columns: 1fr; }
+    section{ padding: 50px 0; }
+    .masthead-top{ flex-direction: column; gap: 6px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="container">
+      <div class="masthead-top">
+        <span>Computational Philology — Field Notes No. 03</span>
+        <span>Python · NLTK · scikit-learn · NetworkX · SciPy</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero-section">
+    <div class="container hero">
+      <div>
+        <h1>Word Clustering<br><em>in Classic Literature</em></h1>
+        <p class="hero-sub">Three novels, one shared vocabulary graph — semantic neighbourhoods discovered from corpus statistics alone, with no pre-trained embeddings.</p>
+        <div class="pill-row">
+          <span class="pill">NLP</span>
+          <span class="pill">Graph Algorithms</span>
+          <span class="pill">Unsupervised Learning</span>
+        </div>
+      </div>
+      <div class="hero-figure">
+        <svg viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg">
+          <!-- edges -->
+          <g stroke="#211F1A" stroke-opacity="0.28" stroke-width="1">
+            <line x1="78" y1="70" x2="140" y2="120"/>
+            <line x1="78" y1="70" x2="60" y2="140"/>
+            <line x1="140" y1="120" x2="60" y2="140"/>
+            <line x1="140" y1="120" x2="190" y2="90"/>
+            <line x1="190" y1="90" x2="230" y2="140"/>
+            <line x1="190" y1="90" x2="150" y2="180"/>
+            <line x1="230" y1="140" x2="280" y2="120"/>
+            <line x1="230" y1="140" x2="270" y2="190"/>
+            <line x1="280" y1="120" x2="320" y2="160"/>
+            <line x1="150" y1="180" x2="100" y2="220"/>
+            <line x1="150" y1="180" x2="190" y2="230"/>
+            <line x1="60" y1="140" x2="100" y2="220"/>
+            <line x1="270" y1="190" x2="190" y2="230"/>
+            <line x1="190" y1="230" x2="240" y2="260"/>
+          </g>
+          <!-- nodes: dracula cluster -->
+          <g>
+            <circle cx="78" cy="70" r="5.5" fill="#8B3A3A"/>
+            <circle cx="140" cy="120" r="5.5" fill="#8B3A3A"/>
+            <circle cx="60" cy="140" r="5.5" fill="#8B3A3A"/>
+          </g>
+          <!-- nodes: wonderland cluster -->
+          <g>
+            <circle cx="190" cy="90" r="5.5" fill="#3D5A4C"/>
+            <circle cx="230" cy="140" r="5.5" fill="#3D5A4C"/>
+            <circle cx="280" cy="120" r="5.5" fill="#3D5A4C"/>
+            <circle cx="320" cy="160" r="5.5" fill="#3D5A4C"/>
+          </g>
+          <!-- nodes: kafka cluster -->
+          <g>
+            <circle cx="150" cy="180" r="5.5" fill="#5C5638"/>
+            <circle cx="270" cy="190" r="5.5" fill="#5C5638"/>
+            <circle cx="100" cy="220" r="5.5" fill="#5C5638"/>
+            <circle cx="190" cy="230" r="5.5" fill="#5C5638"/>
+            <circle cx="240" cy="260" r="5.5" fill="#5C5638"/>
+          </g>
+          <text x="78" y="55" font-family="IBM Plex Mono" font-size="10.5" fill="#211F1A" text-anchor="middle">helsing</text>
+          <text x="48" y="158" font-family="IBM Plex Mono" font-size="10.5" fill="#211F1A" text-anchor="middle">van</text>
+          <text x="190" y="75" font-family="IBM Plex Mono" font-size="10.5" fill="#211F1A" text-anchor="middle">alice</text>
+          <text x="332" y="155" font-family="IBM Plex Mono" font-size="10.5" fill="#211F1A" text-anchor="start">rabbit</text>
+          <text x="150" y="165" font-family="IBM Plex Mono" font-size="10.5" fill="#211F1A" text-anchor="middle">would</text>
+          <text x="88" y="236" font-family="IBM Plex Mono" font-size="10.5" fill="#211F1A" text-anchor="middle">said</text>
+          <text x="240" y="276" font-family="IBM Plex Mono" font-size="10.5" fill="#211F1A" text-anchor="middle">must</text>
+        </svg>
+        <div class="hero-figure-cap">100-node co-occurrence graph · colour = source novel</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATS ============ -->
+  <div class="container">
+    <div class="stats">
+      <div class="stat"><div class="stat-num">3</div><div class="stat-label">Classic Novels</div></div>
+      <div class="stat"><div class="stat-num">~450k</div><div class="stat-label">Tokens</div></div>
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label">Clustering Algorithms</div></div>
+      <div class="stat"><div class="stat-num">100</div><div class="stat-label">Words in Final Graph</div></div>
+    </div>
+  </div>
+
+  <!-- ============ CORPUS ============ -->
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">The Corpus</div>
+        <h2>Three worlds, one vocabulary graph</h2>
+      </div>
+      <div class="corpus-grid">
+
+        <div class="book-card" data-book="dracula">
+          <div class="accent-bar"></div>
+          <div class="book-glyph">🧛</div>
+          <h3>Dracula</h3>
+          <div class="book-author">Bram Stoker, 1897</div>
+          <p>A rich cast of named characters and gothic vocabulary produces tight, distinct character-name clusters.</p>
+          <span class="book-tag">tight character clusters</span>
+        </div>
+
+        <div class="book-card" data-book="metamorphosis">
+          <div class="accent-bar"></div>
+          <div class="book-glyph">🪲</div>
+          <h3>Metamorphosis</h3>
+          <div class="book-author">Franz Kafka, 1915</div>
+          <p>Domestic and psychological language contributes abstract noun and modal verb clusters to the shared graph.</p>
+          <span class="book-tag">abstract nouns · modals</span>
+        </div>
+
+        <div class="book-card" data-book="wonderland">
+          <div class="accent-bar"></div>
+          <div class="book-glyph">🐇</div>
+          <h3>Alice's Adventures in Wonderland</h3>
+          <div class="book-author">Lewis Carroll, 1865</div>
+          <p>Playful, unusual word choices and strong dialogue inject high-frequency verbs and proper nouns with no cross-novel overlap.</p>
+          <span class="book-tag">verbs · isolated proper nouns</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ PIPELINE ============ -->
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Full Pipeline</div>
+        <h2>From raw text to refined graph</h2>
+      </div>
+
+      <div class="pipeline">
+
+        <div class="stage">
+          <div class="stage-label">Stage 1</div>
+          <div class="stage-title">Preprocess</div>
+          <span class="stage-detail">lemmatise · clean</span>
+          <p>Raw .txt files for all three novels are stripped of Project Gutenberg headers and footers, lowercased, and stripped of punctuation. Sentence tokenisation (NLTK) precedes stop-word removal and lemmatisation, yielding the top 100 content words — verbs, nouns, adjectives, and proper nouns — across roughly 450k combined tokens.</p>
+        </div>
+
+        <div class="stage">
+          <div class="stage-label">Stage 2</div>
+          <div class="stage-title">Build Metric</div>
+          <span class="stage-detail">co-occurrence · distance</span>
+          <p>For every word pair, shared sentences are counted and the mean token gap across the corpus is computed. These combine into a hybrid distance: frequent co-occurrence shrinks the distance, while large positional separation increases it.</p>
+        </div>
+
+        <div class="stage">
+          <div class="stage-label">Stage 3</div>
+          <div class="stage-title">Dijkstra Refine</div>
+          <span class="stage-detail">graph smoothing</span>
+          <p>The 100 × 100 hybrid distance matrix becomes a weighted graph — words as nodes, distances as edge weights. Dijkstra's shortest-path algorithm then captures transitive similarity: words that rarely co-occur directly can still be close if connected through shared intermediaries.</p>
+        </div>
+
+        <div class="stage">
+          <div class="stage-label">Stage 4</div>
+          <div class="stage-title">Cluster + Visualise</div>
+          <span class="stage-detail">KMeans · DBSCAN · …</span>
+          <p>Four unsupervised methods — K-Means, Hierarchical, Spectral, and DBSCAN — run on both the raw and Dijkstra-refined matrices. PCA projects the result to two dimensions for direct visual comparison.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ DISTANCE METRIC ============ -->
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Custom Distance Metric</div>
+        <h2>A metric built from corpus statistics alone</h2>
+      </div>
+
+      <div class="metric-block">
+        <div class="metric-formula">
+          <div class="formula-label">Hybrid distance, word i · word j</div>
+          <div class="formula-main">D<sub>ij</sub> &nbsp;=&nbsp; 1 / (1 + co-occ<sub>ij</sub>) &nbsp;+&nbsp; avg_positional<sub>ij</sub></div>
+          <div class="term-list">
+            <div><span class="sym">co-occ<sub>ij</sub></span> sentences where i and j both appear</div>
+            <div><span class="sym">avg_positional</span> mean token-index gap between i and j</div>
+          </div>
+        </div>
+        <div class="metric-explain">
+          <h3>No pre-trained embeddings</h3>
+          <p>The inverse co-occurrence term pulls frequently paired words closer together, while the positional term penalises pairs that, even when they do co-occur, tend to sit far apart within a sentence.</p>
+          <p>Every value in the matrix is derived directly from the three-novel corpus — there is no external model, no transfer learning, and no pre-trained vector space underneath it.</p>
+          <div class="callout">Sentence co-occurrence → count shared sentences per pair<br>Average positional distance → mean token gap across corpus</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ DIJKSTRA / GRAPH ============ -->
+  <section>
+    <div class="container graph-section">
+      <div class="graph-figure">
+        <svg viewBox="0 0 340 280" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="#211F1A" stroke-opacity="0.18" stroke-width="1">
+            <line x1="60" y1="50" x2="150" y2="40"/>
+            <line x1="150" y1="40" x2="250" y2="60"/>
+            <line x1="60" y1="50" x2="80" y2="140"/>
+            <line x1="150" y1="40" x2="170" y2="150"/>
+            <line x1="250" y1="60" x2="270" y2="150"/>
+            <line x1="80" y1="140" x2="170" y2="150"/>
+            <line x1="170" y1="150" x2="270" y2="150"/>
+            <line x1="80" y1="140" x2="100" y2="230"/>
+            <line x1="170" y1="150" x2="180" y2="230"/>
+            <line x1="270" y1="150" x2="260" y2="230"/>
+            <line x1="100" y1="230" x2="180" y2="230"/>
+            <line x1="180" y1="230" x2="260" y2="230"/>
+          </g>
+          <!-- highlighted shortest path -->
+          <polyline points="60,50 80,140 170,150 270,150" fill="none" stroke="#8B3A3A" stroke-width="2.4" stroke-dasharray="1 0"/>
+          <g fill="#211F1A">
+            <circle cx="60" cy="50" r="5"/>
+            <circle cx="150" cy="40" r="5"/>
+            <circle cx="250" cy="60" r="5"/>
+            <circle cx="170" cy="150" r="5"/>
+            <circle cx="270" cy="150" r="5"/>
+            <circle cx="100" cy="230" r="5"/>
+            <circle cx="180" cy="230" r="5"/>
+            <circle cx="260" cy="230" r="5"/>
+          </g>
+          <circle cx="80" cy="140" r="6" fill="#8B3A3A"/>
+          <text x="40" y="38" font-family="IBM Plex Mono" font-size="11" fill="#211F1A">van</text>
+          <text x="92" y="132" font-family="IBM Plex Mono" font-size="11" fill="#8B3A3A">helsing</text>
+          <text x="178" y="138" font-family="IBM Plex Mono" font-size="11" fill="#211F1A">must</text>
+          <text x="278" y="138" font-family="IBM Plex Mono" font-size="11" fill="#211F1A">crucifix</text>
+        </svg>
+      </div>
+      <div class="graph-text">
+        <div class="eyebrow">Dijkstra Shortest-Path Refinement</div>
+        <h3>Transitive similarity, not just direct contact</h3>
+        <p>The raw hybrid matrix only sees pairs that co-occur directly. Treating the matrix as a weighted graph and running Dijkstra's algorithm over it surfaces a shortest-path matrix that also captures indirect, transitive relationships.</p>
+        <p>A word pair connected only through shared intermediaries — never appearing in the same sentence themselves — can still end up close in the refined space.</p>
+        <div class="path-trace">
+          <div class="path-row"><strong>raw D(van, crucifix)</strong> — large, no direct co-occurrence</div>
+          <div class="path-row"><strong>shortest path</strong> — van → helsing → must → crucifix</div>
+          <div class="path-row"><strong>refined D(van, crucifix)</strong> — small, transitively connected</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ CLUSTERING METHODS ============ -->
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Clustering Algorithms</div>
+        <h2>Four lenses on the same distance matrix</h2>
+      </div>
+
+      <div class="methods-grid">
+
+        <div class="method-card">
+          <div class="method-head">
+            <h3>K-Means</h3>
+            <svg class="method-icon" viewBox="0 0 46 30"><circle cx="10" cy="10" r="3" fill="#211F1A"/><circle cx="16" cy="16" r="3" fill="#211F1A"/><circle cx="34" cy="22" r="3" fill="#211F1A" opacity="0.4"/><circle cx="28" cy="8" r="3" fill="#211F1A" opacity="0.4"/></svg>
+          </div>
+          <div class="method-tag">centroid-based · k=5, n_init=10</div>
+          <p>Initialise k centroids, then alternate assignment and update until stable. Run on both the raw and Dijkstra-refined matrices as a fast baseline for direct comparison.</p>
+        </div>
+
+        <div class="method-card">
+          <div class="method-head">
+            <h3>Hierarchical</h3>
+            <svg class="method-icon" viewBox="0 0 46 30"><line x1="6" y1="26" x2="6" y2="14" stroke="#211F1A" stroke-width="1.5"/><line x1="20" y1="26" x2="20" y2="14" stroke="#211F1A" stroke-width="1.5"/><line x1="6" y1="14" x2="20" y2="14" stroke="#211F1A" stroke-width="1.5"/><line x1="13" y1="14" x2="13" y2="6" stroke="#211F1A" stroke-width="1.5"/></svg>
+          </div>
+          <div class="method-tag">agglomerative · dendrogram</div>
+          <p>Builds nested clusters bottom-up from the distance matrix, exposing the hierarchy between tight character clusters and broader thematic groupings.</p>
+        </div>
+
+        <div class="method-card">
+          <div class="method-head">
+            <h3>Spectral</h3>
+            <svg class="method-icon" viewBox="0 0 46 30"><circle cx="14" cy="15" r="9" fill="none" stroke="#211F1A" stroke-width="1.4"/><circle cx="32" cy="15" r="6" fill="none" stroke="#211F1A" stroke-width="1.4"/></svg>
+          </div>
+          <div class="method-tag">graph-theoretic · eigendecomposition</div>
+          <p>Uses the eigenstructure of the similarity graph to find clusters that aren't necessarily convex — well-suited to the irregular shapes the Dijkstra refinement produces.</p>
+        </div>
+
+        <div class="method-card">
+          <div class="method-head">
+            <h3>DBSCAN</h3>
+            <svg class="method-icon" viewBox="0 0 46 30"><circle cx="10" cy="12" r="2.4" fill="#211F1A"/><circle cx="15" cy="16" r="2.4" fill="#211F1A"/><circle cx="11" cy="20" r="2.4" fill="#211F1A"/><circle cx="38" cy="8" r="2.4" fill="#211F1A" opacity="0.4"/></svg>
+          </div>
+          <div class="method-tag">density-based · noise-aware</div>
+          <p>Groups dense neighbourhoods of words and explicitly flags outliers as noise rather than forcing every word into the nearest cluster.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ KEY FINDINGS ============ -->
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Key Findings</div>
+        <h2>What the graph reveals</h2>
+      </div>
+
+      <div class="findings">
+
+        <div class="finding-card">
+          <div class="finding-mark">“</div>
+          <h3>Character names cluster tightly</h3>
+          <p><span class="sample-words">van</span> <span class="sample-words">helsing</span> <span class="sample-words">alice</span> <span class="sample-words">rabbit</span> form distinct sub-groups — each novel's narrative world emerges naturally from the shared graph.</p>
+        </div>
+
+        <div class="finding-card">
+          <div class="finding-mark">“</div>
+          <h3>Modal verbs form a dense neighbourhood</h3>
+          <p><span class="sample-words">said</span> <span class="sample-words">would</span> <span class="sample-words">could</span> <span class="sample-words">must</span> appear in close positional proximity throughout all three texts, regardless of author.</p>
+        </div>
+
+        <div class="finding-card">
+          <div class="finding-mark">“</div>
+          <h3>Dijkstra improves coherence</h3>
+          <p>Words transitively connected through shared intermediaries — but undervalued by raw pairwise distance — are correctly grouped together once graph smoothing is applied.</p>
+        </div>
+
+        <div class="finding-card">
+          <div class="finding-mark">“</div>
+          <h3>DBSCAN isolates genuine outliers</h3>
+          <p>Words that don't fit any thematic group are flagged as noise rather than forced into the nearest cluster — a property the centroid-based methods don't share.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ CONCEPTS ============ -->
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Concepts Demonstrated</div>
+        <h2>Taxonomy</h2>
+      </div>
+      <div class="concept-list">
+        <span class="concept-pill">Corpus linguistics</span>
+        <span class="concept-pill">Custom distance metrics</span>
+        <span class="concept-pill">Graph algorithms</span>
+        <span class="concept-pill">Dijkstra's algorithm</span>
+        <span class="concept-pill">K-Means</span>
+        <span class="concept-pill">Hierarchical clustering</span>
+        <span class="concept-pill">Spectral clustering</span>
+        <span class="concept-pill">DBSCAN</span>
+        <span class="concept-pill">PCA</span>
+        <span class="concept-pill">t-SNE</span>
+        <span class="concept-pill">NLTK</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container" style="display:flex; justify-content:space-between; width:100%;">
+      <span>Word Clustering in Classic Literature</span>
+      <span>Dracula · Metamorphosis · Alice's Adventures in Wonderland</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
